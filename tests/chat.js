@@ -1,99 +1,111 @@
 const anchor = require("@project-serum/anchor");
-const assert = require("assert");
+const readline = require("readline");
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+let provider = anchor.Provider.local();
+anchor.setProvider(provider);
+let isChat = true;
+// Program client handle.
 
-describe("chat", () => {
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.env());
+const idl = JSON.parse(require('fs').readFileSync('./target/idl/chat.json', 'utf8'));
 
-  // Program client handle.
-  const program = anchor.workspace.Chat;
+// Address of the deployed program.
+const programId = new anchor.web3.PublicKey("Bqh7rY5BNZTkQBYHWTgm7cuRBsPUiQChJaTD4ry3Z9B4");
 
-  // Chat room account.
-  const chatRoom = new anchor.web3.Account();
+// Generate the program client from IDL.
+const program = new anchor.Program(idl, programId);
 
-  it("Creates a chat room", async () => {
-    // Add your test here.
+// let chatPool = new anchor.web3.PublicKey();
+let chatRoom = new anchor.web3.Account();
 
-    await program.rpc.createChatRoom("Test Chat", {
-      accounts: {
-        chatRoom: chatRoom.publicKey,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      },
-      instructions: [
-        await program.account.chatRoom.createInstruction(chatRoom),
-      ],
-      signers: [chatRoom],
+async function main() {
+    await create_room(program, chatRoom);
+    await create_user(program);
+}
+
+async function create_room(program, chatRoom) {
+    let chat_tran = await program.rpc.createChatRoom("Test Chat", {
+        accounts: {
+            chatRoom: chatRoom.publicKey,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
+        instructions: [
+            await program.account.chatRoom.createInstruction(chatRoom),
+        ],
+        signers: [chatRoom],
     });
+    console.log("chat_tran:", chat_tran);
+}
 
-    const chat = await program.account.chatRoom(chatRoom.publicKey);
-    const name = new TextDecoder("utf-8").decode(new Uint8Array(chat.name));
-    assert.ok(name.startsWith("Test Chat")); // [u8; 280] => trailing zeros.
-    assert.ok(chat.messages.length === 33607);
-    assert.ok(chat.head.toNumber() === 0);
-    assert.ok(chat.tail.toNumber() === 0);
-  });
-
-  it("Creates a user", async () => {
+async function create_user(program) {
     const authority = program.provider.wallet.publicKey;
-    await program.rpc.createUser("My User", {
-      accounts: {
-        user: await program.account.user.associatedAddress(authority),
-        authority,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
+    let user_tran = await program.rpc.createUser("My User", {
+        accounts: {
+            user: await program.account.user.associatedAddress(authority),
+            authority,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            systemProgram: anchor.web3.SystemProgram.programId,
+        },
     });
+    console.log("user_tran:", user_tran);
     const account = await program.account.user.associated(authority);
-    assert.ok(account.name === "My User");
-    assert.ok(account.authority.equals(authority));
-  });
 
-  it("Sends messages", async () => {
+}
+
+async function sendMessage(program, chatRoom, messages) {
     const authority = program.provider.wallet.publicKey;
     const user = await program.account.user.associatedAddress(authority);
-
-    // Only send a couple messages so the test doesn't take an eternity.
-    const numMessages = 10;
-
-    // Generate random message strings.
-    const messages = new Array(numMessages).fill("").map((msg) => {
-      return (
-        Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(36).substring(2, 15)
-      );
-    });
-
-    // Send each message.
-    for (let k = 0; k < numMessages; k += 1) {
-      console.log("Sending message " + k);
-      await program.rpc.sendMessage(messages[k], {
+    let msg_tran = await program.rpc.sendMessage(messages, {
         accounts: {
-          user,
-          authority,
-          chatRoom: chatRoom.publicKey,
+            user,
+            authority,
+            chatRoom: chatRoom.publicKey,
         },
-      });
-    }
-
-    // Check the chat room state is as expected.
-    const chat = await program.account.chatRoom(chatRoom.publicKey);
-    const name = new TextDecoder("utf-8").decode(new Uint8Array(chat.name));
-    assert.ok(name.startsWith("Test Chat")); // [u8; 280] => trailing zeros.
-    assert.ok(chat.messages.length === 33607);
-    assert.ok(chat.head.toNumber() === numMessages);
-    assert.ok(chat.tail.toNumber() === 0);
-    chat.messages.forEach((msg, idx) => {
-      if (idx < 10) {
-        const data = new TextDecoder("utf-8").decode(new Uint8Array(msg.data));
-        console.log("Message", data);
-        assert.ok(msg.from.equals(user));
-        assert.ok(data.startsWith(messages[idx]));
-      } else {
-        assert.ok(new anchor.web3.PublicKey());
-        assert.ok(
-          JSON.stringify(msg.data) === JSON.stringify(new Array(280).fill(0))
-        );
-      }
     });
-  });
+    // console.log("msg_tran:", msg_tran);
+}
+
+async function readMessage(program, chatRoom, next) {
+    const chat = await program.account.chatRoom(chatRoom.publicKey);
+    let msg = chat.messages[next];
+    let data = null;
+    let from = null;
+    if (msg && !msg.from.equals(anchor.web3.PublicKey.default)) {
+        from = msg.from.toString();
+        data = new TextDecoder("utf-8").decode(new Uint8Array(msg.data));
+    }
+    return {from: from, msg: data};
+}
+async function msgReader() {
+    let i = 0;
+    const authority = program.provider.wallet.publicKey;
+    console.log(authority.toString());
+    while (isChat){
+        let {from, msg} = await readMessage(program, chatRoom, i);
+        if (from && from != authority.toBase58()) {
+            i++;
+            console.info("\t\tfrom: " + from);
+            console.info("\t\t\t\t", msg);
+        }
+    }
+}
+async function msgSender() {
+    for await (const command of rl) {
+        if (command === "exit") {
+            console.log("Exit chat!");
+            isChat = false;
+            rl.close();
+            return;
+        }
+        if (command) {
+            await sendMessage(program, chatRoom, command);
+        }
+    }
+}
+console.log('Running client.');
+main().then(() => {
+    msgReader();
+    msgSender();
 });
