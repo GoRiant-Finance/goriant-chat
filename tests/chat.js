@@ -28,7 +28,7 @@ describe("chat", () => {
     const chat = await program.account.chatRoom(chatRoom.publicKey);
     const name = new TextDecoder("utf-8").decode(new Uint8Array(chat.name));
     assert.ok(name.startsWith("Test Chat")); // [u8; 280] => trailing zeros.
-    assert.ok(chat.messages.length === 33607);
+    assert.ok(chat.messages.length === 100);
     assert.ok(chat.head.toNumber() === 0);
     assert.ok(chat.tail.toNumber() === 0);
   });
@@ -79,7 +79,7 @@ describe("chat", () => {
     const chat = await program.account.chatRoom(chatRoom.publicKey);
     const name = new TextDecoder("utf-8").decode(new Uint8Array(chat.name));
     assert.ok(name.startsWith("Test Chat")); // [u8; 280] => trailing zeros.
-    assert.ok(chat.messages.length === 33607);
+    assert.ok(chat.messages.length === 100);
     assert.ok(chat.head.toNumber() === numMessages);
     assert.ok(chat.tail.toNumber() === 0);
     chat.messages.forEach((msg, idx) => {

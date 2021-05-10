@@ -72,7 +72,7 @@ pub struct ChatRoom {
     head: u64,
     tail: u64,
     name: [u8; 280],            // Human readable name (char bytes).
-    messages: [Message; 33607], // Leaves the account at 10,485,680 bytes.
+    messages: [Message; 100], // Leaves the account at 10,485,680 bytes.
 }
 
 impl ChatRoom {
@@ -84,7 +84,7 @@ impl ChatRoom {
         self.head += 1;
     }
     fn index_of(counter: u64) -> usize {
-        std::convert::TryInto::try_into(counter % 33607).unwrap()
+        std::convert::TryInto::try_into(counter % 100).unwrap()
     }
 }
 
