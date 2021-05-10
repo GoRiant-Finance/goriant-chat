@@ -1,4 +1,4 @@
-import {Button, Col, Row, Input} from "antd";
+import {Button, Col, Row} from "antd";
 import React, {useEffect} from "react";
 import {Link} from "react-router-dom";
 import {ConnectButton} from "../../components/ConnectButton";
@@ -10,6 +10,8 @@ import {WRAPPED_SOL_MINT} from "../../utils/ids";
 import {formatUSD} from "../../utils/utils";
 
 export const HomeView = () => {
+
+
   const {marketEmitter, midPriceInUSD} = useMarkets();
   const {tokenMap} = useConnectionConfig();
   const SRM_ADDRESS = 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt';
@@ -48,33 +50,6 @@ export const HomeView = () => {
         <Link to="/faucet">
           <Button>Faucet</Button>
         </Link>
-      </Col>
-
-      <Col span={24}>
-        <h1>Chat Panel</h1>
-      </Col>
-
-      <Col span={6}>
-        <h2>Create new user:</h2>
-      </Col>
-      <Col span={18}>
-        <Input/>
-      </Col>
-      <Col span={6}>
-        <h2>Create new chat room:</h2>
-      </Col>
-      <Col span={18}>
-        <Input/>
-      </Col>
-      <Col span={6}>
-        <h2>Send chat message:</h2>
-      </Col>
-      <Col span={18}>
-        <Input/>
-      </Col>
-
-      <Col span={24}>
-        <div className="builton"/>
       </Col>
     </Row>
   );

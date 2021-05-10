@@ -1,13 +1,13 @@
-import { AccountLayout, MintLayout, Token } from "@solana/spl-token";
+import {AccountLayout, MintLayout, Token} from "@solana/spl-token";
 import {
   Account,
   PublicKey,
   SystemProgram,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../utils/ids";
-import { TokenAccount } from "../models";
-import { cache, TokenAccountParser } from "./../contexts/accounts";
+import {TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT} from "../utils/ids";
+import {TokenAccount} from "../models";
+import {cache, TokenAccountParser} from "./../contexts/accounts";
 
 export function ensureSplAccount(
   instructions: TransactionInstruction[],

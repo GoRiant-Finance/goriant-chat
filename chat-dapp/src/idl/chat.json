@@ -1,0 +1,176 @@
+{
+  "config": {
+    "programId": "6BPUw74YU1JvZ6aXvinejJMVxyqa2ZErooHEF3DJTSvv",
+    "url": "https://devnet.solana.com"
+  },
+  "idl": {
+    "version": "0.0.0",
+    "name": "chat",
+    "instructions": [
+      {
+        "name": "createUser",
+        "accounts": [
+          {
+            "name": "user",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "authority",
+            "isMut": false,
+            "isSigner": true
+          },
+          {
+            "name": "rent",
+            "isMut": false,
+            "isSigner": false
+          },
+          {
+            "name": "systemProgram",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": [
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "createChatRoom",
+        "accounts": [
+          {
+            "name": "chatRoom",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "rent",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": [
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "sendMessage",
+        "accounts": [
+          {
+            "name": "user",
+            "isMut": false,
+            "isSigner": false
+          },
+          {
+            "name": "authority",
+            "isMut": false,
+            "isSigner": true
+          },
+          {
+            "name": "chatRoom",
+            "isMut": true,
+            "isSigner": false
+          }
+        ],
+        "args": [
+          {
+            "name": "msg",
+            "type": "string"
+          }
+        ]
+      }
+    ],
+    "accounts": [
+      {
+        "name": "User",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "authority",
+              "type": "publicKey"
+            }
+          ]
+        }
+      },
+      {
+        "name": "ChatRoom",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "head",
+              "type": "u64"
+            },
+            {
+              "name": "tail",
+              "type": "u64"
+            },
+            {
+              "name": "name",
+              "type": {
+                "array": [
+                  "u8",
+                  280
+                ]
+              }
+            },
+            {
+              "name": "messages",
+              "type": {
+                "array": [
+                  {
+                    "defined": "Message"
+                  },
+                  33607
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "types": [
+      {
+        "name": "Message",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "from",
+              "type": "publicKey"
+            },
+            {
+              "name": "data",
+              "type": {
+                "array": [
+                  "u8",
+                  280
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": 100,
+        "name": "Unknown"
+      }
+    ],
+    "metadata": {
+      "address": "CGc5o9srrJqrcr9BEQ3kGRd8BixzcYdadX4xg5cBgY1m"
+    }
+  }
+}
